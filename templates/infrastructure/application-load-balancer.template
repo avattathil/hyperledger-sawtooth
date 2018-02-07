@@ -55,7 +55,7 @@
                 "LoadBalancerArn": {
                     "Ref": "ApplicationLoadBalancer"
                 },
-                "Port": 80,
+                "Port": 8008,
                 "Protocol": "HTTP",
                 "DefaultActions": [
                     {
@@ -76,7 +76,7 @@
                 "VpcId": {
                     "Ref": "VPCID"
                 },
-                "Port": 80,
+                "Port": 8008,
                 "Protocol": "HTTP"
             }
         }
@@ -98,7 +98,7 @@
             }
         },
         "ApplicationLoadBalancerListener": {
-            "Description": "Listener Port (80)",
+            "Description": "Listener Port (8008)",
             "Value": {
                 "Ref": "ApplicationLoadBalancerListener"
             }

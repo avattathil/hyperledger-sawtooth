@@ -1,0 +1,237 @@
+{
+    "Description": "Service Template",
+    "Parameters": {
+        "VPCID": {
+            "Description": "Target VPC where Services will be deployed",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "Cluster": {
+            "Description": "Target ECS Cluster ID ",
+            "Type": "String"
+        },
+        "DesiredCount": {
+            "Description": "Number of instancaes of task to be run on Cluster",
+            "Type": "Number",
+            "Default": 2
+        },
+        "Listener": {
+            "Description": "Application Load Balancer listener ",
+            "Type": "String"
+        },
+        "Path": {
+            "Description": " Application Load Balancer registeration path",
+            "Type": "String",
+            "Default": "/services"
+        }
+    },
+    "Resources": {
+        "Service": {
+            "Type": "AWS::ECS::Service",
+            "DependsOn": "ListenerRule",
+            "Properties": {
+                "Cluster": {
+                    "Ref": "Cluster"
+                },
+                "Role": {
+                    "Ref": "ServiceRole"
+                },
+                "DesiredCount": {
+                    "Ref": "DesiredCount"
+                },
+                "TaskDefinition": {
+                    "Ref": "TaskDefinition"
+                },
+                "LoadBalancers": [
+                    {
+                        "ContainerName": "service",
+                        "ContainerPort": 80,
+                        "TargetGroupArn": {
+                            "Ref": "TargetGroup"
+                        }
+                    }
+                ]
+            }
+        },
+        "TaskDefinition": {
+            "Type": "AWS::ECS::TaskDefinition",
+            "Properties": {
+                "RequiresCompatibilities": [
+                    "EC2",
+                    "FARGATE"
+                ],
+                "ContainerDefinitions" : [
+                    {
+                        "entryPoint": [
+                            "intkey-tp-python",
+                            "-vv",
+                            "-C",
+                            "tcp://validator:4004"
+                        ],
+                        "essential": true,
+                        "image": "hyperledger/sawtooth-intkey-tp-python:1.0",
+                        "name": "intkey-tp-python"
+                    },
+                    {
+                        "entryPoint": [
+                            "sawtooth-rest-api",
+                            "-C",
+                            "tcp://validator:4004",
+                            "--bind",
+                            "rest-api:8008"
+                        ],
+                        "essential": true,
+                        "image": "hyperledger/sawtooth-rest-api:1.0",
+                        "name": "rest-api",
+                        "portMappings": [
+                            {
+                                "containerPort": 8008,
+                                "hostPort": 8008
+                            }
+                        ]
+                    },
+                    {
+                        "entryPoint": [
+                            "settings-tp",
+                            "-vv",
+                            "-C",
+                            "tcp://validator:4004"
+                        ],
+                        "essential": true,
+                        "image": "hyperledger/sawtooth-settings-tp:1.0",
+                        "name": "settings-tp"
+                    },
+                    {
+                        "entryPoint": [
+                            "bash",
+                            "-c",
+                            "sawtooth keygen && tail -f /dev/null "
+                        ],
+                        "essential": true,
+                        "image": "hyperledger/sawtooth-all:1.0",
+                        "name": "shell"
+                    },
+                    {
+                        "entryPoint": [
+                            "bash",
+                            "-c",
+                            "sawadm keygen && sawtooth keygen my_key && sawset genesis -k /root/.sawtooth/keys/my_key.priv && sawadm genesis config-genesis.batch && sawtooth-validator -vv --endpoint tcp://validator:8800 --bind component:tcp://eth0:4004 --bind network:tcp://eth0:8800 "
+                        ],
+                        "essential": true,
+                        "image": "hyperledger/sawtooth-validator:1.0",
+                        "name": "validator",
+                        "portMappings": [
+                            {
+                                "containerPort": 4004,
+                                "hostPort": 4004
+                            }
+                        ]
+                    },
+                    {
+                        "entryPoint": [
+                            "xo-tp-python",
+                            "-vv",
+                            "-C",
+                            "tcp://validator:4004"
+                        ],
+                        "essential": true,
+                        "image": "hyperledger/sawtooth-xo-tp-python:1.0",
+                        "name": "xo-tp-python"
+                    }
+                ],
+                "family": "",
+                "volumes": []
+            }
+        },
+        "CloudWatchLogsGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+                "LogGroupName": {
+                    "Ref": "AWS::StackName"
+                },
+                "RetentionInDays": 365
+            }
+        },
+        "TargetGroup": {
+            "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCID"
+                },
+                "Port": 8080,
+                "Protocol": "HTTP",
+                "Matcher": {
+                    "HttpCode": "200-299"
+                },
+                "HealthCheckIntervalSeconds": 10,
+                "HealthCheckPath": "/services",
+                "HealthCheckProtocol": "HTTP",
+                "HealthCheckTimeoutSeconds": 5,
+                "HealthyThresholdCount": 2
+            }
+        },
+        "ListenerRule": {
+            "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+            "Properties": {
+                "ListenerArn": {
+                    "Ref": "Listener"
+                },
+                "Priority": 2,
+                "Conditions": [
+                    {
+                        "Field": "path-pattern",
+                        "Values": [
+                            {
+                                "Ref": "Path"
+                            }
+                        ]
+                    }
+                ],
+                "Actions": [
+                    {
+                        "TargetGroupArn": {
+                            "Ref": "TargetGroup"
+                        },
+                        "Type": "forward"
+                    }
+                ]
+            }
+        },
+        "ServiceRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": {
+                    "Fn::Sub": "ecs-service-${AWS::StackName}"
+                },
+                "Path": "/",
+                "AssumeRolePolicyDocument": "{\n    \"Statement\": [{\n        \"Effect\": \"Allow\",\n        \"Principal\": { \"Service\": [ \"ecs.amazonaws.com\" ]},\n        \"Action\": [ \"sts:AssumeRole\" ]\n    }]\n}\n",
+                "Policies": [
+                    {
+                        "PolicyName": {
+                            "Fn::Sub": "ecs-service-${AWS::StackName}"
+                        },
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ec2:AuthorizeSecurityGroupIngress",
+                                        "ec2:Describe*",
+                                        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                                        "elasticloadbalancing:Describe*",
+                                        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                                        "elasticloadbalancing:DeregisterTargets",
+                                        "elasticloadbalancing:DescribeTargetGroups",
+                                        "elasticloadbalancing:DescribeTargetHealth",
+                                        "elasticloadbalancing:RegisterTargets"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
