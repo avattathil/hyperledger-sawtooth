@@ -1,0 +1,108 @@
+{
+    "Description": "Application Load Balancer Stack",
+    "Parameters": {
+        "NameTag": {
+            "Type":"String",
+            "Description": "Name used to tag resources"
+        },
+        "RemoteAccessCIDR": {
+            "Type": "String",
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
+            "Description": "The CIDR IP range that is permitted to access the resources We recommend that you set this value to a trusted IP range."
+        },
+        "ApplicationLoadBalancerSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup::Id",
+            "Description": "Application Load Balancer Security Group"
+        },
+        "VPCID": {
+            "Type": "AWS::EC2::VPC::Id",
+            "Description": "Target VPC in Security Group will be created"
+        },
+        "Subnets": {
+            "Type": "List<AWS::EC2::Subnet::Id>",
+            "Description": "Application Load Balancer Subnets"
+        }
+
+    },
+    "Resources": {
+        "ApplicationLoadBalancer": {
+            "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+            "Properties": {
+                "Name": {
+                    "Ref": "NameTag"
+                },
+                "Subnets": {
+                    "Ref": "Subnets"
+                },
+                "ApplicationLoadBalancerSecurityGroups": [
+                    {
+                        "Ref": "ApplicationLoadBalancerSecurityGroup"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Ref": "NameTag"
+                        }
+                    }
+                ]
+            }
+        },
+        "ApplicationLoadBalancerListener": {
+            "Type": "AWS::ElasticLoadBalancingV2::Listener",
+            "Properties": {
+                "LoadBalancerArn": {
+                    "Ref": "ApplicationLoadBalancer"
+                },
+                "Port": 8080,
+                "Protocol": "HTTP",
+                "DefaultActions": [
+                    {
+                        "Type": "forward",
+                        "TargetGroupArn": {
+                            "Ref": "ApplicationLoadBalancerTargetGroup"
+                        }
+                    }
+                ]
+            }
+        },
+        "ApplicationLoadBalancerTargetGroup": {
+            "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+            "Properties": {
+                "Name": {
+                    "Fn::Sub": "${NameTag}-DefaultGroup"
+                },
+                "VpcId": {
+                    "Ref": "VPCID"
+                },
+                "Port": 8080,
+                "Protocol": "HTTP"
+            }
+        }
+    },
+    "Outputs": {
+        "ApplicationLoadBalancer": {
+            "Description": "A reference to the Application Load Balancer",
+            "Value": {
+                "Ref": "ApplicationLoadBalancer"
+            }
+        },
+        "ApplicationLoadBalancerURL": {
+            "Description": "Application Load Balancer URL",
+            "Value": {
+                "Fn::GetAtt": [
+                    "ApplicationLoadBalancer",
+                    "DNSName"
+                ]
+            }
+        },
+        "ApplicationLoadBalancerListener": {
+            "Description": "Listener Port (8080)",
+            "Value": {
+                "Ref": "ApplicationLoadBalancerListener"
+            }
+        }
+    }
+}
