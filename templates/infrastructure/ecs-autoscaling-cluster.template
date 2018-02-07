@@ -6,25 +6,25 @@
             "Description": "Name used to tag resources"
         },
         "ECSInstanceType": {
-            "Description": "Which instance type should we use to build the ECS cluster?",
+            "Description": "ECS cluster type",
             "Type": "String",
-            "Default": "c4.large"
+            "Default": "t2.large"
         },
         "ECSClusterSize": {
-            "Description": "How many ECS hosts do you want to initially deploy?",
+            "Description": "Number of ECS instances",
             "Type": "Number",
             "Default": 4
         },
         "VPCID": {
-            "Description": "Choose which VPC this ECS cluster should be deployed to",
+            "Description": "Target VPC where ECS Cluster will be deployed",
             "Type": "AWS::EC2::VPC::Id"
         },
         "PrivateSubnets": {
-            "Description": "Choose which subnets this ECS cluster should be deployed to",
+            "Description": "ECS cluster Private Subnets",
             "Type": "List<AWS::EC2::Subnet::Id>"
         },
         "ECSSecurityGroup": {
-            "Description": "Select the Security Group to use for the ECS cluster hosts",
+            "Description": "ECS Cluster Security Group",
             "Type": "AWS::EC2::SecurityGroup::Id"
         }
     },
@@ -210,7 +210,7 @@
                         "AMI"
                     ]
                 },
-                "ECSInstanceType": {
+                "InstanceType": {
                     "Ref": "ECSInstanceType"
                 },
                 "SecurityGroups": [

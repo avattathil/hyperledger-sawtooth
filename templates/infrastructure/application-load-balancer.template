@@ -17,7 +17,7 @@
         },
         "VPCID": {
             "Type": "AWS::EC2::VPC::Id",
-            "Description": "Target VPC in Security Group will be created"
+            "Description": "Target VPC where Application Load Balancer will be deployed"
         },
         "PublicSubnets": {
             "Type": "List<AWS::EC2::Subnet::Id>",
@@ -55,7 +55,7 @@
                 "LoadBalancerArn": {
                     "Ref": "ApplicationLoadBalancer"
                 },
-                "Port": 8080,
+                "Port": 80,
                 "Protocol": "HTTP",
                 "DefaultActions": [
                     {
@@ -76,7 +76,7 @@
                 "VpcId": {
                     "Ref": "VPCID"
                 },
-                "Port": 8080,
+                "Port": 80,
                 "Protocol": "HTTP"
             }
         }
@@ -98,7 +98,7 @@
             }
         },
         "ApplicationLoadBalancerListener": {
-            "Description": "Listener Port (8080)",
+            "Description": "Listener Port (80)",
             "Value": {
                 "Ref": "ApplicationLoadBalancerListener"
             }

@@ -280,6 +280,55 @@
                     }
                 }
             }
+        },
+        "ECSStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "DependsOn": "VPCStack",
+            "Properties": {
+                "TemplateURL": {
+                    "Fn::Sub": "https://${BucketName}.s3.amazonaws.com/${KeyPrefix}templates/infrastructure/ecs-autoscaling-cluster.template"
+                },
+                "Parameters": {
+                    "NameTag": "HyperLedger",
+                    "VPCID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.VPCID"
+                        ]
+                    },
+                    "PrivateSubnets": {
+                        "Fn::Join": [
+                            ",",
+                            [
+                                {
+                                    "Fn::GetAtt": [
+                                        "VPCStack",
+                                        "Outputs.PrivateSubnet1AID"
+                                    ]
+                                },
+                                {
+                                    "Fn::GetAtt": [
+                                        "VPCStack",
+                                        "Outputs.PrivateSubnet2AID"
+                                    ]
+                                },
+                                {
+                                    "Fn::GetAtt": [
+                                        "VPCStack",
+                                        "Outputs.PrivateSubnet3AID"
+                                    ]
+                                }
+                            ]
+                        ]
+                    },
+                    "ECSSecurityGroup":{
+                        "Fn::GetAtt": [
+                            "SGStack",
+                            "Outputs.ECSSecurityGroup"
+                        ]
+                    }
+                }
+            }
         }
     },
     "Outputs": {}

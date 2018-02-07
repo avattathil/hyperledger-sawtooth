@@ -13,7 +13,7 @@
         },
         "VPCID": {
             "Type": "AWS::EC2::VPC::Id",
-            "Description": "Target VPC in Security Group will be created"
+            "Description": "Target VPC where Security Groups will be deployed"
         }
     },
     "Resources": {
