@@ -2,7 +2,7 @@
     "Description": "Security Group Stack",
     "Parameters": {
         "NameTag": {
-            "Type":"String",
+            "Type": "String",
             "Description": "Name used to tag resources"
         },
         "RemoteAccessCIDR": {
@@ -52,7 +52,7 @@
                 "SecurityGroupIngress": [
                     {
                         "CidrIp": {
-                            "Ref":"RemoteAccessCIDR"
+                            "Ref": "RemoteAccessCIDR"
                         },
                         "IpProtocol": -1
                     }
@@ -69,14 +69,14 @@
         }
     },
     "Outputs": {
-        "ECSInstanceSecurityGroup": {
+        "ECSSecurityGroup": {
             "Description": "ECS Instance security group",
             "Value": {
                 "Ref": "ECSInstanceSecurityGroup"
             }
         },
-        "ApplicationLoadBalancerSecurityGroup": {
-            "Description": "ELB security group",
+        "ALBSecurityGroup": {
+            "Description": "ALB security group",
             "Value": {
                 "Ref": "ApplicationLoadBalancerSecurityGroup"
             }

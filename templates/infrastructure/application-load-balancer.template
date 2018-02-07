@@ -2,7 +2,7 @@
     "Description": "Application Load Balancer Stack",
     "Parameters": {
         "NameTag": {
-            "Type":"String",
+            "Type": "String",
             "Description": "Name used to tag resources"
         },
         "RemoteAccessCIDR": {
@@ -19,11 +19,10 @@
             "Type": "AWS::EC2::VPC::Id",
             "Description": "Target VPC in Security Group will be created"
         },
-        "Subnets": {
+        "PublicSubnets": {
             "Type": "List<AWS::EC2::Subnet::Id>",
-            "Description": "Application Load Balancer Subnets"
+            "Description": "Application Load Balancer Public Subnets"
         }
-
     },
     "Resources": {
         "ApplicationLoadBalancer": {
@@ -33,9 +32,9 @@
                     "Ref": "NameTag"
                 },
                 "Subnets": {
-                    "Ref": "Subnets"
+                    "Ref": "PublicSubnets"
                 },
-                "ApplicationLoadBalancerSecurityGroups": [
+                "SecurityGroups": [
                     {
                         "Ref": "ApplicationLoadBalancerSecurityGroup"
                     }

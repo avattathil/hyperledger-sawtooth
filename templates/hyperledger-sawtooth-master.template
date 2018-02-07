@@ -217,16 +217,70 @@
                 },
                 "Parameters": {
                     "NameTag": "HyperLedger",
-					"VPC": {
-						"Fn::GetAtt": [
-							"VPCStack",
-							"Outputs.VPCID"
-						]
-					}
+                    "RemoteAccessCIDR": {
+                        "Ref": "RemoteAccessCIDR"
+                    },
+                    "VPCID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.VPCID"
+                        ]
+                    }
+                }
+            }
+        },
+        "ALBStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "DependsOn": "SGStack",
+            "Properties": {
+                "TemplateURL": {
+                    "Fn::Sub": "https://${BucketName}.s3.amazonaws.com/${KeyPrefix}templates/infrastructure/application-load-balancer.template"
+                },
+                "Parameters": {
+                    "NameTag": "HyperLedger",
+                    "RemoteAccessCIDR": {
+                        "Ref": "RemoteAccessCIDR"
+                    },
+                    "VPCID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.VPCID"
+                        ]
+                    },
+                    "ApplicationLoadBalancerSecurityGroup": {
+                        "Fn::GetAtt": [
+                            "SGStack",
+                            "Outputs.ALBSecurityGroup"
+                        ]
+                    },
+                    "PublicSubnets": {
+                        "Fn::Join": [
+                            ",",
+                            [
+                                {
+                                    "Fn::GetAtt": [
+                                        "VPCStack",
+                                        "Outputs.PublicSubnet1ID"
+                                    ]
+                                },
+                                {
+                                    "Fn::GetAtt": [
+                                        "VPCStack",
+                                        "Outputs.PublicSubnet2ID"
+                                    ]
+                                },
+                                {
+                                    "Fn::GetAtt": [
+                                        "VPCStack",
+                                        "Outputs.PublicSubnet3ID"
+                                    ]
+                                }
+                            ]
+                        ]
+                    }
                 }
             }
         }
     },
-    "Outputs": {
-    }
+    "Outputs": {}
 }
