@@ -1,0 +1,6 @@
+[submodule "templates/submodules/aws-vpc"]
+	path = templates/submodules/aws-vpc
+	url = git@github.com:aws-quickstart/quickstart-aws-vpc.git
+[submodule "submodules/aws-vpc"]
+	path = submodules/aws-vpc
+	url = git@github.com:aws-quickstart/quickstart-aws-vpc.git
