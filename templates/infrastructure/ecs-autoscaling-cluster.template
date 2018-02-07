@@ -1,0 +1,267 @@
+{
+    "Description": "ECS ASG Cluster Stack ",
+    "Parameters": {
+        "NameTag": {
+            "Type": "String",
+            "Description": "Name used to tag resources"
+        },
+        "ECSInstanceType": {
+            "Description": "Which instance type should we use to build the ECS cluster?",
+            "Type": "String",
+            "Default": "c4.large"
+        },
+        "ECSClusterSize": {
+            "Description": "How many ECS hosts do you want to initially deploy?",
+            "Type": "Number",
+            "Default": 4
+        },
+        "VPCID": {
+            "Description": "Choose which VPC this ECS cluster should be deployed to",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "PrivateSubnets": {
+            "Description": "Choose which subnets this ECS cluster should be deployed to",
+            "Type": "List<AWS::EC2::Subnet::Id>"
+        },
+        "ECSSecurityGroup": {
+            "Description": "Select the Security Group to use for the ECS cluster hosts",
+            "Type": "AWS::EC2::SecurityGroup::Id"
+        }
+    },
+    "Mappings": {
+        "AWSRegionToAMI": {
+            "us-east-2": {
+                "AMI": "ami-ce1c36ab"
+            },
+            "us-east-1": {
+                "AMI": "ami-28456852"
+            },
+            "us-west-2": {
+                "AMI": "ami-decc7fa6"
+            },
+            "us-west-1": {
+                "AMI": "ami-74262414"
+            },
+            "eu-west-3": {
+                "AMI": "ami-9aef59e7"
+            },
+            "eu-west-2": {
+                "AMI": "ami-67cbd003"
+            },
+            "eu-west-1": {
+                "AMI": "ami-1d46df64"
+            },
+            "eu-central-1": {
+                "AMI": "ami-509a053f"
+            },
+            "ap-northeast-2": {
+                "AMI": "ami-c212b2ac"
+            },
+            "ap-northeast-1": {
+                "AMI": "ami-872c4ae1"
+            },
+            "ap-southeast-2": {
+                "AMI": "ami-58bb443a"
+            },
+            "ap-southeast-1": {
+                "AMI": "ami-910d72ed"
+            },
+            "ca-central-1": {
+                "AMI": "ami-435bde27"
+            },
+            "ap-south-1": {
+                "AMI": "ami-00491f6f"
+            },
+            "sa-east-1": {
+                "AMI": "ami-af521fc3"
+            }
+        }
+    },
+    "Resources": {
+        "ECSCluster": {
+            "Type": "AWS::ECS::Cluster",
+            "Properties": {
+                "ClusterName": {
+                    "Ref": "NameTag"
+                }
+            }
+        },
+        "ECSAutoScalingGroup": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "VPCZoneIdentifier": {
+                    "Ref": "PrivateSubnets"
+                },
+                "LaunchConfigurationName": {
+                    "Ref": "ECSLaunchConfiguration"
+                },
+                "MinSize": {
+                    "Ref": "ECSClusterSize"
+                },
+                "MaxSize": {
+                    "Ref": "ECSClusterSize"
+                },
+                "DesiredCapacity": {
+                    "Ref": "ECSClusterSize"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${NameTag}"
+                        },
+                        "PropagateAtLaunch": true
+                    }
+                ]
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT15M"
+                }
+            },
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {
+                    "MinInstancesInService": 1,
+                    "MaxBatchSize": 1,
+                    "PauseTime": "PT15M",
+                    "SuspendProcesses": [
+                        "HealthCheck",
+                        "ReplaceUnhealthy",
+                        "AZRebalance",
+                        "AlarmNotification",
+                        "ScheduledActions"
+                    ],
+                    "WaitOnResourceSignals": true
+                }
+            }
+        },
+        "ECSLaunchConfiguration": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "config": {
+                        "packages": {
+                            "yum": {
+                                "awslogs": []
+                            }
+                        },
+                        "commands": {
+                            "01_add_instance_to_cluster": {
+                                "command": {
+                                    "Fn::Sub": "echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config"
+                                }
+                            }
+                        },
+                        "files": {
+                            "/etc/cfn/cfn-hup.conf": {
+                                "mode": 256,
+                                "owner": "root",
+                                "group": "root",
+                                "content": {
+                                    "Fn::Sub": "[main]\nstack=${AWS::StackId}\nregion=${AWS::Region}\n"
+                                }
+                            },
+                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                                "content": {
+                                    "Fn::Sub": "[cfn-auto-reloader-hook]\ntriggers=post.update\npath=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init\naction=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration\n"
+                                }
+                            }
+                        },
+                        "services": {
+                            "/etc/awslogs/awscli.conf": {
+                                "content": {
+                                    "Fn::Sub": "[plugins]\ncwlogs = cwlogs\n[default]\nregion = ${AWS::Region}\n"
+                                }
+                            },
+                            "/etc/awslogs/awslogs.conf": {
+                                "content": {
+                                    "Fn::Sub": "[general]\nstate_file = /var/lib/awslogs/agent-state\n\n[/var/log/dmesg]\nfile = /var/log/dmesg\nlog_group_name = ${ECSCluster}-/var/log/dmesg\nlog_stream_name = ${ECSCluster}\n\n[/var/log/messages]\nfile = /var/log/messages\nlog_group_name = ${ECSCluster}-/var/log/messages\nlog_stream_name = ${ECSCluster}\ndatetime_format = %b %d %H:%M:%S\n\n[/var/log/docker]\nfile = /var/log/docker\nlog_group_name = ${ECSCluster}-/var/log/docker\nlog_stream_name = ${ECSCluster}\ndatetime_format = %Y-%m-%dT%H:%M:%S.%f\n\n[/var/log/ecs/ecs-init.log]\nfile = /var/log/ecs/ecs-init.log.*\nlog_group_name = ${ECSCluster}-/var/log/ecs/ecs-init.log\nlog_stream_name = ${ECSCluster}\ndatetime_format = %Y-%m-%dT%H:%M:%SZ\n\n[/var/log/ecs/ecs-agent.log]\nfile = /var/log/ecs/ecs-agent.log.*\nlog_group_name = ${ECSCluster}-/var/log/ecs/ecs-agent.log\nlog_stream_name = ${ECSCluster}\ndatetime_format = %Y-%m-%dT%H:%M:%SZ\n\n[/var/log/ecs/audit.log]\nfile = /var/log/ecs/audit.log.*\nlog_group_name = ${ECSCluster}-/var/log/ecs/audit.log\nlog_stream_name = ${ECSCluster}\ndatetime_format = %Y-%m-%dT%H:%M:%SZ\n"
+                                }
+                            },
+                            "sysvinit": {
+                                "cfn-hup": {
+                                    "enabled": true,
+                                    "ensureRunning": true,
+                                    "files": [
+                                        "/etc/cfn/cfn-hup.conf",
+                                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                                    ]
+                                },
+                                "awslogs": {
+                                    "enabled": true,
+                                    "ensureRunning": true,
+                                    "files": [
+                                        "/etc/awslogs/awslogs.conf",
+                                        "/etc/awslogs/awscli.conf"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties": {
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "AWSRegionToAMI",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "AMI"
+                    ]
+                },
+                "ECSInstanceType": {
+                    "Ref": "ECSInstanceType"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "ECSSecurityGroup"
+                    }
+                ],
+                "IamInstanceProfile": {
+                    "Ref": "ECSInstanceProfile"
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Sub": "#!/bin/bash\nyum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm\nyum install -y aws-cfn-bootstrap\n/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration\n/opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup\n"
+                    }
+                }
+            }
+        },
+        "ECSRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "Path": "/",
+                "RoleName": {
+                    "Fn::Sub": "${NameTag}-ECSRole-${AWS::Region}"
+                },
+                "AssumeRolePolicyDocument": "{\n    \"Statement\": [{\n        \"Action\": \"sts:AssumeRole\",\n        \"Effect\": \"Allow\",\n        \"Principal\": {\n            \"Service\": \"ec2.amazonaws.com\"\n        }\n    }]\n}\n",
+                "Policies": [
+                    {
+                        "PolicyName": "ecs-service",
+                        "PolicyDocument": "{\n    \"Statement\": [{\n        \"Effect\": \"Allow\",\n        \"Action\": [\n            \"ecs:CreateCluster\",\n            \"ecs:DeregisterContainerInstance\",\n            \"ecs:DiscoverPollEndpoint\",\n            \"ecs:Poll\",\n            \"ecs:RegisterContainerInstance\",\n            \"ecs:StartTelemetrySession\",\n            \"ecs:Submit*\",\n            \"logs:CreateLogStream\",\n            \"logs:PutLogEvents\",\n            \"ecr:BatchCheckLayerAvailability\",\n            \"ecr:BatchGetImage\",\n            \"ecr:GetDownloadUrlForLayer\",\n            \"ecr:GetAuthorizationToken\",\n            \"ssm:DescribeAssociation\",\n            \"ssm:GetDeployablePatchSnapshotForInstance\",\n            \"ssm:GetDocument\",\n            \"ssm:GetManifest\",\n            \"ssm:GetParameters\",\n            \"ssm:ListAssociations\",\n            \"ssm:ListInstanceAssociations\",\n            \"ssm:PutInventory\",\n            \"ssm:PutComplianceItems\",\n            \"ssm:PutConfigurePackageResult\",\n            \"ssm:UpdateAssociationStatus\",\n            \"ssm:UpdateInstanceAssociationStatus\",\n            \"ssm:UpdateInstanceInformation\",\n            \"ec2messages:AcknowledgeMessage\",\n            \"ec2messages:DeleteMessage\",\n            \"ec2messages:FailMessage\",\n            \"ec2messages:GetEndpoint\",\n            \"ec2messages:GetMessages\",\n            \"ec2messages:SendReply\",\n            \"cloudwatch:PutMetricData\",\n            \"ec2:DescribeInstanceStatus\",\n            \"ds:CreateComputer\",\n            \"ds:DescribeDirectories\",\n            \"logs:CreateLogGroup\",\n            \"logs:CreateLogStream\",\n            \"logs:DescribeLogGroups\",\n            \"logs:DescribeLogStreams\",\n            \"logs:PutLogEvents\",\n            \"s3:PutObject\",\n            \"s3:GetObject\",\n            \"s3:AbortMultipartUpload\",\n            \"s3:ListMultipartUploadParts\",\n            \"s3:ListBucket\",\n            \"s3:ListBucketMultipartUploads\"\n        ],\n        \"Resource\": \"*\"\n    }]\n}\n"
+                    }
+                ]
+            }
+        },
+        "ECSInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "ECSRole"
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "Cluster": {
+            "Description": "ECS cluster",
+            "Value": {
+                "Ref": "ECSCluster"
+            }
+        }
+    }
+}
