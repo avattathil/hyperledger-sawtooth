@@ -1,0 +1,85 @@
+{
+    "Description": "Security Group Stack",
+    "Parameters": {
+        "NameTag": {
+            "Type":"String",
+            "Description": "Name used to tag resources"
+        },
+        "RemoteAccessCIDR": {
+            "Type": "String",
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "CIDR block parameter must be in the form x.x.x.x/x",
+            "Description": "The CIDR IP range that is permitted to access the instances We recommend that you set this value to a trusted IP range."
+        },
+        "VPCID": {
+            "Type": "AWS::EC2::VPC::Id",
+            "Description": "Target VPC in Security Group will be created"
+        }
+    },
+    "Resources": {
+        "ECSInstanceSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCID"
+                },
+                "GroupDescription": "Allow access to ECS Instances",
+                "SecurityGroupIngress": [
+                    {
+                        "SourceSecurityGroupId": {
+                            "Ref": "ELBSecurityGroup"
+                        },
+                        "IpProtocol": -1
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${NameTag}-ECS-Instances"
+                        }
+                    }
+                ]
+            }
+        },
+        "ELBSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCID"
+                },
+                "GroupDescription": "Alllow access to ECS ElasticLoadBalancer",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": {
+                            "Ref":"RemoteAccessCIDR"
+                        },
+                        "IpProtocol": -1
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Sub": "${NameTag}-ELB"
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "ECSInstanceSecurityGroup": {
+            "Description": "ECS Instance security group",
+            "Value": {
+                "Ref": "ECSInstanceSecurityGroup"
+            }
+        },
+        "ELBSecurityGroup": {
+            "Description": "ELB security group",
+            "Value": {
+                "Ref": "ELBSecurityGroup"
+            }
+        }
+    }
+}
