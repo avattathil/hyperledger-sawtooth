@@ -68,10 +68,10 @@
                     "default": "Quick Start S3 Key Prefix"
                 },
                 "RemoteAccessCIDR": {
-                    "default": "Allowed External Access CIDR (OCP UI)"
+                    "default": "Allowed External Access CIDR"
                 },
                 "ContainerAccessCIDR": {
-                    "default": "Allowed External Access CIDR (OCP Router)"
+                    "default": "Allowed External Access CIDR "
                 },
                 "VPCCIDR": {
                     "default": "VPC CIDR"
@@ -169,7 +169,7 @@
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
                 "TemplateURL": {
-                    "Fn::Sub": "https://${BucketName}.s3.amazonaws.com/${KeyPrefix}submodules/aws-vpc/templates/aws-vpc.template"
+                    "Fn::Sub": "https://${BucketName}.s3.amazonaws.com/${KeyPrefix}infrastructure/submodules/aws-vpc/templates/aws-vpc.template"
                 },
                 "Parameters": {
                     "AvailabilityZones": {
@@ -205,6 +205,24 @@
                     "VPCCIDR": {
                         "Ref": "VPCCIDR"
                     }
+                }
+            }
+        },
+        "SGStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "DependsOn": "VPCStack",
+            "Properties": {
+                "TemplateURL": {
+                    "Fn::Sub": "https://${BucketName}.s3.amazonaws.com/${KeyPrefix}infrastructure/security-groups.template"
+                },
+                "Parameters": {
+                    "NameTag": "HyperLedger",
+					"VPC": {
+						"Fn::GetAtt": [
+							"VPCStack",
+							"Outputs.VPCID"
+						]
+					}
                 }
             }
         }
