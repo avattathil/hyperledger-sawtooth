@@ -82,13 +82,13 @@
         }
     },
     "Outputs": {
-        "ApplicationLoadBalancer": {
+        "LoadBalancer": {
             "Description": "A reference to the Application Load Balancer",
             "Value": {
                 "Ref": "ApplicationLoadBalancer"
             }
         },
-        "ApplicationLoadBalancerURL": {
+        "LoadBalancerURL": {
             "Description": "Application Load Balancer URL",
             "Value": {
                 "Fn::GetAtt": [
@@ -97,7 +97,7 @@
                 ]
             }
         },
-        "ApplicationLoadBalancerListener": {
+        "Listener": {
             "Description": "Listener Port (8008)",
             "Value": {
                 "Ref": "ApplicationLoadBalancerListener"

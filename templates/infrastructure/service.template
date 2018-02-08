@@ -1,27 +1,39 @@
 {
     "Description": "Service Template",
     "Parameters": {
+        "NameTag": {
+            "Type": "String",
+            "Description": "Name used to tag resources"
+        },
         "VPCID": {
             "Description": "Target VPC where Services will be deployed",
             "Type": "AWS::EC2::VPC::Id"
         },
-        "Cluster": {
+        "ClusterID": {
             "Description": "Target ECS Cluster ID ",
             "Type": "String"
-        },
-        "DesiredCount": {
-            "Description": "Number of instancaes of task to be run on Cluster",
-            "Type": "Number",
-            "Default": 2
         },
         "Listener": {
             "Description": "Application Load Balancer listener ",
             "Type": "String"
         },
+        "DesiredCount": {
+            "Description": "Number of instancaes of task to be run in ECSCluster",
+            "Type": "Number",
+            "Default": 1
+        },
         "Path": {
             "Description": " Application Load Balancer registeration path",
             "Type": "String",
             "Default": "/services"
+        },
+        "PrivateSubnets": {
+            "Type": "List<AWS::EC2::Subnet::Id>",
+            "Description": "Application Load Balancer Private Subnets"
+        },
+        "ECSSecurityGroup": {
+            "Description": "ECS Cluster Security Group",
+            "Type": "AWS::EC2::SecurityGroup::Id"
         }
     },
     "Resources": {
@@ -30,10 +42,7 @@
             "DependsOn": "ListenerRule",
             "Properties": {
                 "Cluster": {
-                    "Ref": "Cluster"
-                },
-                "Role": {
-                    "Ref": "ServiceRole"
+                    "Ref": "ClusterID"
                 },
                 "DesiredCount": {
                     "Ref": "DesiredCount"
@@ -43,13 +52,26 @@
                 },
                 "LoadBalancers": [
                     {
-                        "ContainerName": "service",
-                        "ContainerPort": 80,
+                        "ContainerName": "rest-api",
+                        "ContainerPort": 8008,
                         "TargetGroupArn": {
                             "Ref": "TargetGroup"
                         }
                     }
-                ]
+                ],
+                "NetworkConfiguration": {
+                    "AwsvpcConfiguration": {
+                        "AssignPublicIp": "DISABLED",
+                        "SecurityGroups": [
+                            {
+                                "Ref": "ECSSecurityGroup"
+                            }
+                        ],
+                        "Subnets": {
+                            "Ref": "PrivateSubnets"
+                        }
+                    }
+                }
             }
         },
         "TaskDefinition": {
@@ -59,105 +81,111 @@
                     "EC2",
                     "FARGATE"
                 ],
-                "ContainerDefinitions" : [
+                "Family": "1",
+                "NetworkMode": "awsvpc",
+                "Cpu": "256",
+                "Memory": "512",
+                "ContainerDefinitions": [
                     {
-                        "entryPoint": [
+                        "Name": "intkey-tp-python",
+                        "Image": "hyperledger/sawtooth-intkey-tp-python:1.0",
+                        "Essential": "true",
+                        "Cpu": 0,
+                        "MemoryReservation": "5",
+                        "EntryPoint": [
                             "intkey-tp-python",
                             "-vv",
                             "-C",
                             "tcp://validator:4004"
-                        ],
-                        "essential": true,
-                        "image": "hyperledger/sawtooth-intkey-tp-python:1.0",
-                        "name": "intkey-tp-python"
+                        ]
                     },
                     {
-                        "entryPoint": [
+                        "Name": "rest-api",
+                        "Image": "hyperledger/sawtooth-rest-api:1.0",
+                        "Essential": "true",
+                        "MemoryReservation": "5",
+                        "Cpu": 0,
+                        "EntryPoint": [
                             "sawtooth-rest-api",
                             "-C",
                             "tcp://validator:4004",
                             "--bind",
                             "rest-api:8008"
                         ],
-                        "essential": true,
-                        "image": "hyperledger/sawtooth-rest-api:1.0",
-                        "name": "rest-api",
-                        "portMappings": [
+                        "PortMappings": [
                             {
-                                "containerPort": 8008,
-                                "hostPort": 8008
+                                "ContainerPort": 8008,
+                                "HostPort": 8008
                             }
                         ]
                     },
                     {
-                        "entryPoint": [
+                        "Name": "settings-tp",
+                        "Image": "hyperledger/sawtooth-settings-tp:1.0",
+                        "Essential": "true",
+                        "MemoryReservation": "5",
+                        "Cpu": 0,
+                        "EntryPoint": [
                             "settings-tp",
                             "-vv",
                             "-C",
                             "tcp://validator:4004"
-                        ],
-                        "essential": true,
-                        "image": "hyperledger/sawtooth-settings-tp:1.0",
-                        "name": "settings-tp"
+                        ]
                     },
                     {
-                        "entryPoint": [
+                        "Name": "shell",
+                        "Image": "hyperledger/sawtooth-all:1.0",
+                        "Essential": "true",
+                        "MemoryReservation": "5",
+                        "Cpu": 0,
+                        "EntryPoint": [
                             "bash",
                             "-c",
                             "sawtooth keygen && tail -f /dev/null "
-                        ],
-                        "essential": true,
-                        "image": "hyperledger/sawtooth-all:1.0",
-                        "name": "shell"
+                        ]
                     },
                     {
-                        "entryPoint": [
+                        "Name": "validator",
+                        "Image": "hyperledger/sawtooth-validator:1.0",
+                        "Essential": "true",
+                        "MemoryReservation": "5",
+                        "Cpu": 0,
+                        "EntryPoint": [
                             "bash",
                             "-c",
                             "sawadm keygen && sawtooth keygen my_key && sawset genesis -k /root/.sawtooth/keys/my_key.priv && sawadm genesis config-genesis.batch && sawtooth-validator -vv --endpoint tcp://validator:8800 --bind component:tcp://eth0:4004 --bind network:tcp://eth0:8800 "
                         ],
-                        "essential": true,
-                        "image": "hyperledger/sawtooth-validator:1.0",
-                        "name": "validator",
-                        "portMappings": [
+                        "PortMappings": [
                             {
-                                "containerPort": 4004,
-                                "hostPort": 4004
+                                "ContainerPort": 4004,
+                                "HostPort": 4004
                             }
                         ]
                     },
                     {
-                        "entryPoint": [
+                        "Name": "xo-tp-python",
+                        "Image": "hyperledger/sawtooth-xo-tp-python:1.0",
+                        "Essential": "true",
+                        "MemoryReservation": "5",
+                        "Cpu": 0,
+                        "EntryPoint": [
                             "xo-tp-python",
                             "-vv",
                             "-C",
                             "tcp://validator:4004"
-                        ],
-                        "essential": true,
-                        "image": "hyperledger/sawtooth-xo-tp-python:1.0",
-                        "name": "xo-tp-python"
+                        ]
                     }
-                ],
-                "family": "",
-                "volumes": []
+                ]
             }
         },
-        "CloudWatchLogsGroup": {
-            "Type": "AWS::Logs::LogGroup",
-            "Properties": {
-                "LogGroupName": {
-                    "Ref": "AWS::StackName"
-                },
-                "RetentionInDays": 365
-            }
-        },
+
         "TargetGroup": {
             "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
             "Properties": {
                 "VpcId": {
                     "Ref": "VPCID"
                 },
-                "Port": 8080,
+                "Port": 8008,
                 "Protocol": "HTTP",
                 "Matcher": {
                     "HttpCode": "200-299"
@@ -166,7 +194,8 @@
                 "HealthCheckPath": "/services",
                 "HealthCheckProtocol": "HTTP",
                 "HealthCheckTimeoutSeconds": 5,
-                "HealthyThresholdCount": 2
+                "HealthyThresholdCount": 2,
+                "TargetType": "ip"
             }
         },
         "ListenerRule": {
@@ -196,41 +225,13 @@
                 ]
             }
         },
-        "ServiceRole": {
-            "Type": "AWS::IAM::Role",
+        "CloudWatchLogsGroup": {
+            "Type": "AWS::Logs::LogGroup",
             "Properties": {
-                "RoleName": {
-                    "Fn::Sub": "ecs-service-${AWS::StackName}"
+                "LogGroupName": {
+                    "Ref": "AWS::StackName"
                 },
-                "Path": "/",
-                "AssumeRolePolicyDocument": "{\n    \"Statement\": [{\n        \"Effect\": \"Allow\",\n        \"Principal\": { \"Service\": [ \"ecs.amazonaws.com\" ]},\n        \"Action\": [ \"sts:AssumeRole\" ]\n    }]\n}\n",
-                "Policies": [
-                    {
-                        "PolicyName": {
-                            "Fn::Sub": "ecs-service-${AWS::StackName}"
-                        },
-                        "PolicyDocument": {
-                            "Version": "2012-10-17",
-                            "Statement": [
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "ec2:AuthorizeSecurityGroupIngress",
-                                        "ec2:Describe*",
-                                        "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                                        "elasticloadbalancing:Describe*",
-                                        "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                                        "elasticloadbalancing:DeregisterTargets",
-                                        "elasticloadbalancing:DescribeTargetGroups",
-                                        "elasticloadbalancing:DescribeTargetHealth",
-                                        "elasticloadbalancing:RegisterTargets"
-                                    ],
-                                    "Resource": "*"
-                                }
-                            ]
-                        }
-                    }
-                ]
+                "RetentionInDays": 365
             }
         }
     }

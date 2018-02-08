@@ -8,7 +8,7 @@
         "ECSInstanceType": {
             "Description": "ECS cluster type",
             "Type": "String",
-            "Default": "t2.large"
+            "Default": "c5.xlarge"
         },
         "ECSClusterSize": {
             "Description": "Number of ECS instances",
@@ -257,7 +257,7 @@
         }
     },
     "Outputs": {
-        "Cluster": {
+        "ClusterID": {
             "Description": "ECS cluster",
             "Value": {
                 "Ref": "ECSCluster"

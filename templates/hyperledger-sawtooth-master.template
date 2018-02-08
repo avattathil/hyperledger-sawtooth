@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "HyperLedger, License: Apache 2.0 (Please do not remove) 2.6.2018",
+    "Description": "HyperLedger, License: Apache 2.0 (Please do not remove) 2.7.2018",
     "Metadata": {
         "AWS::CloudFormation::Interface": {
             "ParameterGroups": [
@@ -321,10 +321,71 @@
                             ]
                         ]
                     },
-                    "ECSSecurityGroup":{
+                    "ECSSecurityGroup": {
                         "Fn::GetAtt": [
                             "SGStack",
                             "Outputs.ECSSecurityGroup"
+                        ]
+                    }
+                }
+            }
+        },
+        "ServiceStack": {
+            "Type": "AWS::CloudFormation::Stack",
+            "DependsOn": "ECSStack",
+            "Properties": {
+                "TemplateURL": {
+                    "Fn::Sub": "https://${BucketName}.s3.amazonaws.com/${KeyPrefix}templates/infrastructure/service.template"
+                },
+                "Parameters": {
+                    "NameTag": "HyperLedger",
+                    "VPCID": {
+                        "Fn::GetAtt": [
+                            "VPCStack",
+                            "Outputs.VPCID"
+                        ]
+                    },
+                    "Listener": {
+                        "Fn::GetAtt": [
+                            "ALBStack",
+                            "Outputs.Listener"
+                        ]
+                    },
+                    "ClusterID": {
+                        "Fn::GetAtt": [
+                            "ECSStack",
+                            "Outputs.ClusterID"
+                        ]
+                    },
+                    "ECSSecurityGroup": {
+                        "Fn::GetAtt": [
+                            "SGStack",
+                            "Outputs.ECSSecurityGroup"
+                        ]
+                    },
+                    "PrivateSubnets": {
+                        "Fn::Join": [
+                            ",",
+                            [
+                                {
+                                    "Fn::GetAtt": [
+                                        "VPCStack",
+                                        "Outputs.PrivateSubnet1AID"
+                                    ]
+                                },
+                                {
+                                    "Fn::GetAtt": [
+                                        "VPCStack",
+                                        "Outputs.PrivateSubnet2AID"
+                                    ]
+                                },
+                                {
+                                    "Fn::GetAtt": [
+                                        "VPCStack",
+                                        "Outputs.PrivateSubnet3AID"
+                                    ]
+                                }
+                            ]
                         ]
                     }
                 }
