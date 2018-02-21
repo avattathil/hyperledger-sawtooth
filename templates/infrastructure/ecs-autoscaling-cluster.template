@@ -19,8 +19,8 @@
             "Description": "Target VPC where ECS Cluster will be deployed",
             "Type": "AWS::EC2::VPC::Id"
         },
-        "PrivateSubnets": {
-            "Description": "ECS cluster Private Subnets",
+        "PublicSubnets": {
+            "Description": "ECS cluster Public Subnets",
             "Type": "List<AWS::EC2::Subnet::Id>"
         },
         "ECSSecurityGroup": {
@@ -90,7 +90,7 @@
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "Properties": {
                 "VPCZoneIdentifier": {
-                    "Ref": "PrivateSubnets"
+                    "Ref": "PublicSubnets"
                 },
                 "LaunchConfigurationName": {
                     "Ref": "ECSLaunchConfiguration"

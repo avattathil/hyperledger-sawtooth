@@ -27,7 +27,7 @@
                 "SecurityGroupIngress": [
                     {
                         "SourceSecurityGroupId": {
-                            "Ref": "ApplicationLoadBalancerSecurityGroup"
+                            "Ref": "RemoteAccessCIDR"
                         },
                         "IpProtocol": -1
                     }

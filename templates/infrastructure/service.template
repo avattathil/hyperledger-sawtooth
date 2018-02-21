@@ -191,7 +191,7 @@
                     "HttpCode": "200-299"
                 },
                 "HealthCheckIntervalSeconds": 10,
-                "HealthCheckPath": "/services",
+                "HealthCheckPath": "/blocks",
                 "HealthCheckProtocol": "HTTP",
                 "HealthCheckTimeoutSeconds": 5,
                 "HealthyThresholdCount": 2,
