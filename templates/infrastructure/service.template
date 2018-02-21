@@ -25,7 +25,7 @@
         "Path": {
             "Description": " Application Load Balancer registeration path",
             "Type": "String",
-            "Default": "/services"
+            "Default": "/blocks"
         },
         "PrivateSubnets": {
             "Type": "List<AWS::EC2::Subnet::Id>",
