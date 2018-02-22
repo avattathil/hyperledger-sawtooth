@@ -26,6 +26,10 @@
         "ECSSecurityGroup": {
             "Description": "ECS Cluster Security Group",
             "Type": "AWS::EC2::SecurityGroup::Id"
+        },
+        "KeyPairName": {
+            "Description": "The name of an existing public/private key pair, which allows you to securely connect to your instance after it launches",
+            "Type": "AWS::EC2::KeyPair::KeyName"
         }
     },
     "Mappings": {
@@ -220,6 +224,9 @@
                 ],
                 "IamInstanceProfile": {
                     "Ref": "ECSInstanceProfile"
+                },
+                "KeyName": {
+                    "Ref": "KeyPairName"
                 },
                 "UserData": {
                     "Fn::Base64": {

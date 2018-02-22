@@ -78,33 +78,188 @@
             "Type": "AWS::ECS::TaskDefinition",
             "Properties": {
                 "RequiresCompatibilities": [
-                    "EC2",
-                    "FARGATE"
+                    "EC2"
                 ],
                 "Family": "1",
                 "NetworkMode": "awsvpc",
-                "Cpu": "256",
+                "Cpu": "2048",
                 "Memory": "512",
                 "ContainerDefinitions": [
                     {
-                        "Name": "intkey-tp-python",
-                        "Image": "hyperledger/sawtooth-intkey-tp-python:1.0",
-                        "Essential": "true",
+                        "DnsSearchDomains": [],
+                        "Environment": [],
+                        "ReadonlyRootFilesystem": false,
+                        "Name": "settings-tp",
+                        "Links": [],
+                        "MountPoints": [],
+                        "Image": "hyperledger/sawtooth-settings-tp:1.0",
+                        "LinuxParameters": {
+                            "Capabilities": {}
+                        },
+                        "Essential": true,
+                        "PortMappings": [],
+                        "DnsServers": [],
+                        "DockerSecurityOptions": [],
+                        "EntryPoint": [
+                            "settings-tp",
+                            "-vv",
+                            "-C",
+                            "tcp://validator:4004"
+                        ],
+                        "Ulimits": [],
+                        "Privileged": false,
+                        "Memory": 512,
+                        "Command": [],
+                        "ExtraHosts": [],
                         "Cpu": 0,
-                        "MemoryReservation": "5",
+                        "VolumesFrom": [],
+                        "DockerLabels": {}
+                    },
+                    {
+                        "DnsSearchDomains": [],
+                        "Environment": [],
+                        "ReadonlyRootFilesystem": false,
+                        "Name": "shell",
+                        "Links": [],
+                        "MountPoints": [],
+                        "Image": "hyperledger/sawtooth-all:1.0",
+                        "LinuxParameters": {
+                            "Capabilities": {}
+                        },
+                        "Essential": true,
+                        "PortMappings": [],
+                        "DnsServers": [],
+                        "DockerSecurityOptions": [],
+                        "EntryPoint": [
+                            "bash",
+                            "-c",
+                            "sawtooth keygen && tail -f /dev/null "
+                        ],
+                        "Ulimits": [],
+                        "Privileged": false,
+                        "Memory": 512,
+                        "Command": [],
+                        "ExtraHosts": [],
+                        "Cpu": 0,
+                        "VolumesFrom": [],
+                        "DockerLabels": {}
+                    },
+                    {
+                        "DnsSearchDomains": [],
+                        "Environment": [],
+                        "ReadonlyRootFilesystem": false,
+                        "Name": "validator",
+                        "Links": [],
+                        "MountPoints": [],
+                        "Image": "hyperledger/sawtooth-validator:1.0",
+                        "LinuxParameters": {
+                            "Capabilities": {}
+                        },
+                        "Essential": true,
+                        "PortMappings": [
+                            {
+                                "Protocol": "tcp",
+                                "ContainerPort": 4004,
+                                "HostPort": 4004
+                            }
+                        ],
+                        "DnsServers": [],
+                        "DockerSecurityOptions": [],
+                        "EntryPoint": [
+                            "bash",
+                            "-c",
+                            "sawadm keygen && sawtooth keygen my_key && sawset genesis -k /root/.sawtooth/keys/my_key.priv && sawadm genesis config-genesis.batch && sawtooth-validator -vv --endpoint tcp://validator:8800 --bind component:tcp://eth0:4004 --bind network:tcp://eth0:8800 "
+                        ],
+                        "Ulimits": [],
+                        "Privileged": false,
+                        "Memory": 512,
+                        "Command": [],
+                        "ExtraHosts": [],
+                        "Cpu": 0,
+                        "VolumesFrom": [],
+                        "DockerLabels": {}
+                    },
+                    {
+                        "DnsSearchDomains": [],
+                        "Environment": [],
+                        "ReadonlyRootFilesystem": false,
+                        "Name": "xo-tp-python",
+                        "Links": [],
+                        "MountPoints": [],
+                        "Image": "hyperledger/sawtooth-xo-tp-python:1.0",
+                        "LinuxParameters": {
+                            "Capabilities": {}
+                        },
+                        "Essential": true,
+                        "PortMappings": [],
+                        "DnsServers": [],
+                        "DockerSecurityOptions": [],
+                        "EntryPoint": [
+                            "xo-tp-python",
+                            "-vv",
+                            "-C",
+                            "tcp://validator:4004"
+                        ],
+                        "Ulimits": [],
+                        "Privileged": false,
+                        "Memory": 512,
+                        "Command": [],
+                        "ExtraHosts": [],
+                        "Cpu": 0,
+                        "VolumesFrom": [],
+                        "DockerLabels": {}
+                    },
+                    {
+                        "DnsSearchDomains": [],
+                        "Environment": [],
+                        "ReadonlyRootFilesystem": false,
+                        "Name": "intkey-tp-python",
+                        "Links": [],
+                        "MountPoints": [],
+                        "Image": "hyperledger/sawtooth-intkey-tp-python:1.0",
+                        "LinuxParameters": {
+                            "Capabilities": {}
+                        },
+                        "Essential": true,
+                        "PortMappings": [],
+                        "DnsServers": [],
+                        "DockerSecurityOptions": [],
                         "EntryPoint": [
                             "intkey-tp-python",
                             "-vv",
                             "-C",
                             "tcp://validator:4004"
-                        ]
+                        ],
+                        "Ulimits": [],
+                        "Privileged": false,
+                        "Memory": 512,
+                        "Command": [],
+                        "ExtraHosts": [],
+                        "Cpu": 0,
+                        "VolumesFrom": [],
+                        "DockerLabels": {}
                     },
                     {
+                        "DnsSearchDomains": [],
+                        "Environment": [],
+                        "ReadonlyRootFilesystem": false,
                         "Name": "rest-api",
+                        "Links": [],
+                        "MountPoints": [],
                         "Image": "hyperledger/sawtooth-rest-api:1.0",
-                        "Essential": "true",
-                        "MemoryReservation": "5",
-                        "Cpu": 0,
+                        "LinuxParameters": {
+                            "Capabilities": {}
+                        },
+                        "Essential": true,
+                        "PortMappings": [
+                            {
+                                "Protocol": "tcp",
+                                "ContainerPort": 8008,
+                                "HostPort": 8008
+                            }
+                        ],
+                        "DnsServers": [],
+                        "DockerSecurityOptions": [],
                         "EntryPoint": [
                             "sawtooth-rest-api",
                             "-C",
@@ -112,73 +267,18 @@
                             "--bind",
                             "rest-api:8008"
                         ],
-                        "PortMappings": [
-                            {
-                                "ContainerPort": 8008,
-                                "HostPort": 8008
-                            }
-                        ]
-                    },
-                    {
-                        "Name": "settings-tp",
-                        "Image": "hyperledger/sawtooth-settings-tp:1.0",
-                        "Essential": "true",
-                        "MemoryReservation": "5",
+                        "Ulimits": [],
+                        "Privileged": false,
+                        "Memory": 512,
+                        "Command": [],
+                        "ExtraHosts": [],
                         "Cpu": 0,
-                        "EntryPoint": [
-                            "settings-tp",
-                            "-vv",
-                            "-C",
-                            "tcp://validator:4004"
-                        ]
-                    },
-                    {
-                        "Name": "shell",
-                        "Image": "hyperledger/sawtooth-all:1.0",
-                        "Essential": "true",
-                        "MemoryReservation": "5",
-                        "Cpu": 0,
-                        "EntryPoint": [
-                            "bash",
-                            "-c",
-                            "sawtooth keygen && tail -f /dev/null "
-                        ]
-                    },
-                    {
-                        "Name": "validator",
-                        "Image": "hyperledger/sawtooth-validator:1.0",
-                        "Essential": "true",
-                        "MemoryReservation": "5",
-                        "Cpu": 0,
-                        "EntryPoint": [
-                            "bash",
-                            "-c",
-                            "sawadm keygen && sawtooth keygen my_key && sawset genesis -k /root/.sawtooth/keys/my_key.priv && sawadm genesis config-genesis.batch && sawtooth-validator -vv --endpoint tcp://validator:8800 --bind component:tcp://eth0:4004 --bind network:tcp://eth0:8800 "
-                        ],
-                        "PortMappings": [
-                            {
-                                "ContainerPort": 4004,
-                                "HostPort": 4004
-                            }
-                        ]
-                    },
-                    {
-                        "Name": "xo-tp-python",
-                        "Image": "hyperledger/sawtooth-xo-tp-python:1.0",
-                        "Essential": "true",
-                        "MemoryReservation": "5",
-                        "Cpu": 0,
-                        "EntryPoint": [
-                            "xo-tp-python",
-                            "-vv",
-                            "-C",
-                            "tcp://validator:4004"
-                        ]
+                        "VolumesFrom": [],
+                        "DockerLabels": {}
                     }
                 ]
             }
         },
-
         "TargetGroup": {
             "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
             "Properties": {
