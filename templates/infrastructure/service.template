@@ -61,7 +61,7 @@
                 ],
                 "NetworkConfiguration": {
                     "AwsvpcConfiguration": {
-                        "AssignPublicIp": "DISABLED",
+                        "AssignPublicIp": "ENABLED",
                         "SecurityGroups": [
                             {
                                 "Ref": "ECSSecurityGroup"
@@ -81,7 +81,7 @@
                     "EC2"
                 ],
                 "Family": "1",
-                "NetworkMode": "awsvpc",
+                "NetworkMode": "bridge",
                 "Cpu": "2048",
                 "Memory": "512",
                 "ContainerDefinitions": [
@@ -294,8 +294,7 @@
                 "HealthCheckPath": "/blocks",
                 "HealthCheckProtocol": "HTTP",
                 "HealthCheckTimeoutSeconds": 5,
-                "HealthyThresholdCount": 2,
-                "TargetType": "ip"
+                "HealthyThresholdCount": 2
             }
         },
         "ListenerRule": {
