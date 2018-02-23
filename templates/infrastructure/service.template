@@ -35,7 +35,6 @@
     "Resources": {
         "Service": {
             "Type": "AWS::ECS::Service",
-            "DependsOn": "ListenerRule",
             "Properties": {
                 "Cluster": {
                     "Ref": "ClusterID"
@@ -45,16 +44,7 @@
                 },
                 "TaskDefinition": {
                     "Ref": "TaskDefinition"
-                },
-                "LoadBalancers": [
-                    {
-                        "ContainerName": "rest-api",
-                        "ContainerPort": 8008,
-                        "TargetGroupArn": {
-                            "Ref": "TargetGroup"
-                        }
-                    }
-                ]
+                }
             }
         },
         "TaskDefinition": {
@@ -188,7 +178,7 @@
                             "-C",
                             "tcp://0.0.0.0:4004",
                             "--bind",
-                            "rest-api:8008"
+                            "0.0.0.0:8008"
                         ],
                         "Ulimits": [],
                         "Privileged": false,
@@ -219,35 +209,6 @@
                             "-vv",
                             "-C",
                             "tcp://0.0.0.0:4004"
-                        ],
-                        "Ulimits": [],
-                        "Privileged": false,
-                        "Memory": 512,
-                        "Command": [],
-                        "ExtraHosts": [],
-                        "Cpu": 0,
-                        "VolumesFrom": [],
-                        "DockerLabels": {}
-                    },
-                    {
-                        "DnsSearchDomains": [],
-                        "Environment": [],
-                        "ReadonlyRootFilesystem": false,
-                        "Name": "shell",
-                        "Links": [],
-                        "MountPoints": [],
-                        "Image": "hyperledger/sawtooth-all:1.0",
-                        "LinuxParameters": {
-                            "Capabilities": {}
-                        },
-                        "Essential": true,
-                        "PortMappings": [],
-                        "DnsServers": [],
-                        "DockerSecurityOptions": [],
-                        "EntryPoint": [
-                            "bash",
-                            "-c",
-                            "sawtooth keygen && tail -f /dev/null "
                         ],
                         "Ulimits": [],
                         "Privileged": false,
