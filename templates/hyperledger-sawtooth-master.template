@@ -365,31 +365,6 @@
                             "SGStack",
                             "Outputs.ECSSecurityGroup"
                         ]
-                    },
-                    "PrivateSubnets": {
-                        "Fn::Join": [
-                            ",",
-                            [
-                                {
-                                    "Fn::GetAtt": [
-                                        "VPCStack",
-                                        "Outputs.PrivateSubnet1AID"
-                                    ]
-                                },
-                                {
-                                    "Fn::GetAtt": [
-                                        "VPCStack",
-                                        "Outputs.PrivateSubnet2AID"
-                                    ]
-                                },
-                                {
-                                    "Fn::GetAtt": [
-                                        "VPCStack",
-                                        "Outputs.PrivateSubnet3AID"
-                                    ]
-                                }
-                            ]
-                        ]
                     }
                 }
             }

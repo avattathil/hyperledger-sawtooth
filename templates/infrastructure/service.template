@@ -27,10 +27,6 @@
             "Type": "String",
             "Default": "/blocks"
         },
-        "PrivateSubnets": {
-            "Type": "List<AWS::EC2::Subnet::Id>",
-            "Description": "Application Load Balancer Private Subnets"
-        },
         "ECSSecurityGroup": {
             "Description": "ECS Cluster Security Group",
             "Type": "AWS::EC2::SecurityGroup::Id"
@@ -58,20 +54,7 @@
                             "Ref": "TargetGroup"
                         }
                     }
-                ],
-                "NetworkConfiguration": {
-                    "AwsvpcConfiguration": {
-                        "AssignPublicIp": "ENABLED",
-                        "SecurityGroups": [
-                            {
-                                "Ref": "ECSSecurityGroup"
-                            }
-                        ],
-                        "Subnets": {
-                            "Ref": "PrivateSubnets"
-                        }
-                    }
-                }
+                ]
             }
         },
         "TaskDefinition": {
