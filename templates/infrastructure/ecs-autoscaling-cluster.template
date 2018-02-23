@@ -13,7 +13,7 @@
         "ECSClusterSize": {
             "Description": "Number of ECS instances",
             "Type": "Number",
-            "Default": 4
+            "Default": 1
         },
         "VPCID": {
             "Description": "Target VPC where ECS Cluster will be deployed",
